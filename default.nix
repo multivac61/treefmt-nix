@@ -179,8 +179,24 @@ let
     nixpkgs: configuration:
     let
       mod = evalModule nixpkgs configuration;
+      wrapper = mod.config.build.wrapper;
+      
+      # Use the existing build.check function from the module
+      checkFn = mod.config.build.check;
     in
-    mod.config.build.wrapper;
+    wrapper // { 
+      # Add checkFn at the top level
+      inherit checkFn;
+      
+      # Add passthru for Blueprint compatibility
+      passthru = (wrapper.passthru or {}) // {
+        # Blueprint specifically looks for tests.check
+        tests = {
+          # Default check for the current project (with some fake path)
+          check = checkFn nixpkgs.path;
+        };
+      };
+    };
 in
 {
   inherit
