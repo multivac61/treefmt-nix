@@ -207,7 +207,13 @@ in
                 '';
             x = pkgs.writeShellScriptBin "treefmt" code;
           in
-          (x // { meta = config.package.meta // x.meta; });
+          x
+          // {
+            meta = config.package.meta // x.meta;
+            passthru = x.passthru // {
+              tests.check = config.build.check config.projectRootFile;
+            };
+          };
       };
       programs = mkOption {
         type = types.attrsOf types.package;
